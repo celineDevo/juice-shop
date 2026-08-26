@@ -1,16 +1,15 @@
 /*
- * Copyright (c) 2014-2024 Bjoern Kimminich & the OWASP Juice Shop contributors.
+ * Copyright (c) 2014-2026 Bjoern Kimminich & the OWASP Juice Shop contributors.
  * SPDX-License-Identifier: MIT
  */
 
-import utils = require('../lib/utils')
-import challengeUtils = require('../lib/challengeUtils')
 import { type Request, type Response, type NextFunction } from 'express'
+
+import * as challengeUtils from '../lib/challengeUtils'
 import { challenges } from '../data/datacache'
+import * as security from '../lib/insecurity'
 
-const security = require('../lib/insecurity')
-
-module.exports = function performRedirect () {
+export function performRedirect () {
   return ({ query }: Request, res: Response, next: NextFunction) => {
     const toUrl: string = query.to as string
     if (security.isRedirectAllowed(toUrl)) {
@@ -27,7 +26,7 @@ module.exports = function performRedirect () {
 function isUnintendedRedirect (toUrl: string) {
   let unintended = true
   for (const allowedUrl of security.redirectAllowlist) {
-    unintended = unintended && !utils.startsWith(toUrl, allowedUrl)
+    unintended = unintended && !toUrl.startsWith(allowedUrl)
   }
   return unintended
 }

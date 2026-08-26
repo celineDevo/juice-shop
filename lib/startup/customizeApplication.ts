@@ -1,9 +1,9 @@
 /*
- * Copyright (c) 2014-2024 Bjoern Kimminich & the OWASP Juice Shop contributors.
+ * Copyright (c) 2014-2026 Bjoern Kimminich & the OWASP Juice Shop contributors.
  * SPDX-License-Identifier: MIT
  */
 
-import fs from 'fs'
+import fs from 'node:fs'
 import config from 'config'
 import * as utils from '../utils'
 // @ts-expect-error FIXME due to non-existing type definitions for replace
@@ -12,6 +12,7 @@ import replace from 'replace'
 const customizeApplication = async () => {
   if (config.get<string>('application.name')) {
     customizeTitle()
+    customizeTerraformFiles()
   }
   if (config.get('application.logo')) {
     void customizeLogo()
@@ -92,9 +93,9 @@ const customizeTitle = () => {
 }
 
 const customizeTheme = () => {
-  const bodyClass = '"mat-app-background ' + config.get<string>('application.theme') + '-theme"'
+  const bodyClass = '"' + config.get<string>('application.theme') + '-theme"'
   replace({
-    regex: /"mat-app-background .*-theme"/,
+    regex: /".*-theme"/,
     replacement: bodyClass,
     paths: ['frontend/dist/frontend/index.html'],
     recursive: false,
@@ -111,6 +112,32 @@ const customizeCookieConsentBanner = () => {
     recursive: false,
     silent: true
   })
+}
+
+const slugify = (name: string) => {
+  return name.toLowerCase().replace(/[^\w]+/g, '-').replace(/^-+|-+$/g, '')
+}
+
+const customizeTerraformFiles = () => {
+  const appName = config.get<string>('application.name')
+  if (appName !== 'OWASP Juice Shop') {
+    const slugName = slugify(appName)
+    const snakeName = slugName.replace(/-/g, '_')
+    replace({
+      regex: /juice-shop/g,
+      replacement: slugName,
+      paths: ['terraform'],
+      recursive: true,
+      silent: true
+    })
+    replace({
+      regex: /juice_shop/g,
+      replacement: snakeName,
+      paths: ['terraform'],
+      recursive: true,
+      silent: true
+    })
+  }
 }
 
 export default customizeApplication

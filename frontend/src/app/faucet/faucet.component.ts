@@ -1,7 +1,7 @@
-import { Component, ChangeDetectorRef } from '@angular/core'
+import { Component, ChangeDetectorRef, inject, OnInit, ChangeDetectionStrategy } from '@angular/core'
 import { KeysService } from '../Services/keys.service'
 import { SnackBarHelperService } from '../Services/snack-bar-helper.service'
-import { TranslateService } from '@ngx-translate/core'
+import { TranslateService, TranslateModule } from '@ngx-translate/core'
 import {
   BeeFaucetABI,
   BeeTokenABI,
@@ -15,6 +15,13 @@ import {
   getAccount,
   InjectedConnector
 } from '@wagmi/core'
+import { FormsModule } from '@angular/forms'
+import { MatInputModule } from '@angular/material/input'
+import { MatFormFieldModule, MatLabel } from '@angular/material/form-field'
+
+import { MatButtonModule } from '@angular/material/button'
+import { MatCardModule } from '@angular/material/card'
+import { MatIconModule } from '@angular/material/icon'
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const client = createClient({
@@ -28,17 +35,18 @@ const BeeTokenAddress = '0x36435796Ca9be2bf150CE0dECc2D8Fab5C4d6E13'
 const BeeFaucetAddress = '0x860e3616aD0E0dEDc23352891f3E10C4131EA5BC'
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.Eager,
   selector: 'app-faucet',
   templateUrl: './faucet.component.html',
-  styleUrls: ['./faucet.component.scss']
+  styleUrls: ['./faucet.component.scss'],
+  imports: [MatCardModule, TranslateModule, MatButtonModule, MatFormFieldModule, MatLabel, MatInputModule, FormsModule, MatIconModule]
 })
-export class FaucetComponent {
-  constructor (
-    private readonly keysService: KeysService,
-    private readonly snackBarHelperService: SnackBarHelperService,
-    private readonly translateService: TranslateService,
-    private readonly changeDetectorRef: ChangeDetectorRef
-  ) {}
+export class FaucetComponent implements OnInit {
+  private readonly keysService = inject(KeysService)
+  private readonly snackBarHelperService = inject(SnackBarHelperService)
+  private readonly translateService = inject(TranslateService)
+  private readonly changeDetectorRef = inject(ChangeDetectorRef)
+
 
   userData: object
   session = false
@@ -64,18 +72,21 @@ export class FaucetComponent {
   }
 
   nftMintListener () {
-    this.keysService.nftMintListen().subscribe(
+    this.keysService.nftMintListen().subscribe({
+      next:
       (response) => {
         console.log(response)
       },
-      (error) => {
+      error: (error) => {
         console.error(error)
       }
+    }
     )
   }
 
   checkNftMinted () {
-    this.keysService.checkNftMinted().subscribe(
+    this.keysService.checkNftMinted().subscribe({
+      next:
       (response) => {
         const challengeSolvedStatus = response.data[0].solved
         this.mintButtonDisabled = challengeSolvedStatus
@@ -86,10 +97,12 @@ export class FaucetComponent {
           })
         }
       },
+      error:
       (error) => {
         console.error(error)
         this.successResponse = false
       }
+    }
     )
   }
 
@@ -138,7 +151,7 @@ export class FaucetComponent {
     }
   }
 
-  async handleChainChanged (chainId: string) {
+  async handleChainChanged () {
     await this.handleAuth()
   }
 
@@ -274,17 +287,19 @@ export class FaucetComponent {
           this.nftMintText = translatedString
         })
         setTimeout(() => {
-          this.keysService.verifyNFTWallet(this.metamaskAddress).subscribe(
+          this.keysService.verifyNFTWallet(this.metamaskAddress).subscribe({
+            next:
             (response) => {
               if (response.success) {
                 this.successResponse = response.status
                 this.mintButtonDisabled = true
               }
             },
-            (error) => {
+            error: (error) => {
               console.error(error)
               this.successResponse = false
             }
+          }
           )
         }, 3500)
       }
